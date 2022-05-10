@@ -186,6 +186,7 @@ root@debian-srv:/# ps
 :(){ :|:& };: = это форк-бомба, функция, которая порождает себя n-раз, до исчерпания ресурсов системы.
 
 Механизм автоматической стабилизации - fork rejected by pids controller in /user.slice/user-1000.slice/session-3.scope
+
 Ограничение максимального числа задач.
 По умолчанию TaskMax равен 33% (от ограничений user.slice и зависит от размера оперативной памяти выделенной ОС), его можно увеличить в файле /usr/lib/systemd/system/user-.slice.d/10-defaults.conf
 ```bash
