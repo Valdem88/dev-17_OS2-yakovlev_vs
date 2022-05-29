@@ -71,7 +71,58 @@ Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 ```
-После перезагрузки сервис так же работает.
+После перезагрузки сервис так же работает. 
+
+Возможность добавления опций к запускаемому процессу через внешний файл (посмотрите, например, на systemctl cat cron) проверил таким образом
+
+В файл `/etc/default/cron` вносится переменная `MY_OPTIONS="--collector.cpu.guest --collector.cpu.info"` После этого нужно поправить файл `unit` для демона `node_exporter` и перезапустить конфиг юнитов. 
+
+Измененный файл `unit` 
+```bash
+[Unit]
+Description=Node Exporter Service
+After=network.target
+
+[Service]
+User=nodeusr
+Group=nodeusr
+Type=simple
+EnvironmentFile=/etc/default/cron
+ExecStart=/usr/local/bin/node_exporter $MY_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+Теперь проверяем 
+```bash
+root@debian-srv:~# systemctl daemon-reload
+root@debian-srv:~# systemctl start node_exporter
+root@debian-srv:~# systemctl status node_exporter
+● node_exporter.service - Node Exporter Service
+     Loaded: loaded (/etc/systemd/system/node_exporter.service; enabled; vendor preset: enabled)
+     Active: active (running) since Sun 2022-05-29 22:20:25 MSK; 2s ago
+   Main PID: 2099 (node_exporter)
+      Tasks: 4 (limit: 4660)
+     Memory: 4.7M
+        CPU: 5ms
+     CGroup: /system.slice/node_exporter.service
+             └─2099 /usr/local/bin/node_exporter --collector.cpu.guest --collector.cpu.info
+
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=thermal_zone
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=time
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=timex
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=udp_queues
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=uname
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=vmstat
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=xfs
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:115 level=info collector=zfs
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=node_exporter.go:199 level=info msg="Listening on" address=:9100
+мая 29 22:20:25 debian-srv node_exporter[2099]: ts=2022-05-29T19:20:25.080Z caller=tls_config.go:195 level=info msg="TLS is disabled." http2=false
+```
+
+
 #### 2. Ознакомьтесь с опциями node_exporter и выводом /metrics по-умолчанию. Приведите несколько опций, которые вы бы выбрали для базового мониторинга хоста по CPU, памяти, диску и сети.
 
 Решение
